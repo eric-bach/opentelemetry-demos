@@ -1,0 +1,44 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch/traces:
+    timeout: 1s
+    send_batch_size: 1024
+  batch/logs:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  debug:
+    verbosity: detailed
+  awsxray:
+    region: ${AWS_REGION}
+  awsemf:
+    region: ${AWS_REGION}
+    log_group_name: '/aws/observability-dice-demo'
+    log_stream_name: 'application-metrics'
+  awscloudwatchlogs:
+    region: ${AWS_REGION}
+    log_group_name: '/aws/observability-dice-demo'
+    log_stream_name: 'application-logs'
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch/traces]
+      exporters: [awsxray, debug]
+    metrics:
+      receivers: [otlp]
+      #processors: [batch/metrics]
+      exporters: [awsemf, debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch/logs]
+      exporters: [awscloudwatchlogs, debug]
