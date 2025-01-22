@@ -5,13 +5,13 @@
 services:
   test-app:
     build:
-      context: .
+      context: ./src/
       dockerfile: Dockerfile
     container_name: test-app
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://adot-collector:4317
     volumes:
-      - ./:/app
+      - ./src:/app
     ports:
       - '8080:8080'
     depends_on:
@@ -24,7 +24,7 @@ services:
     container_name: adot-collector
     command: ['--config=/etc/otel-config.yaml']
     volumes:
-      - ./otel-config.yaml:/etc/otel-config.yaml
+      - ./config/otel-config.yaml:/etc/otel-config.yaml
       # TEMP - this is not reading the SSO credentials correctly so we need to use ./docker-compose.sh
       # - ~/.aws:/root/.aws:ro
       # - ~/.aws/sso/cache:/root/.aws/sso/cache:ro
