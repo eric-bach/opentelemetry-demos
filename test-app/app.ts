@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express, { Express } from 'express';
-import { trace, Span, context } from '@opentelemetry/api';
+import opentelemetry, { trace, Span, context } from '@opentelemetry/api';
 import { nodeSDKBuilder } from './instrumentation';
 import { getFlightById, getFlights } from './dao';
 
@@ -12,13 +12,15 @@ const app: Express = express();
 const tracer = trace.getTracer('observability-app-tracer');
 
 // Add a delay inside doSomething function
-const doSomething = async () => {
+const doSomething = async (parentSpan: Span) => {
+  const ctx = opentelemetry.trace.setSpan(context.active(), parentSpan);
+
   const childSpan = tracer.startSpan(
     'doSomething',
     {
       attributes: { 'code.function': 'doSomething' },
     },
-    context.active()
+    ctx
   );
 
   return new Promise((resolve) => setTimeout(resolve, Math.random() * 800)).then(() => {
@@ -33,8 +35,11 @@ app.get('/flights', async (req, res) => {
 
   await tracer.startActiveSpan('getFlights', async (span: Span) => {
     result = await getFlights();
+    const parentSpan = trace.getSpan(context.active());
 
-    await doSomething();
+    if (parentSpan) {
+      await doSomething(parentSpan);
+    }
 
     span.end();
   });
@@ -52,7 +57,10 @@ app.get('/flights/:flightId', async (req, res) => {
 
     result = await getFlightById(flightId);
 
-    await doSomething();
+    const parentSpan = trace.getSpan(context.active());
+    if (parentSpan) {
+      await doSomething(parentSpan);
+    }
 
     span.end();
   });
