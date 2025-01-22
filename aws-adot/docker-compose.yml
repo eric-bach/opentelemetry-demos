@@ -7,7 +7,7 @@ services:
     build:
       context: ./src/
       dockerfile: Dockerfile
-    container_name: test-app
+    container_name: aws-adot-app
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://adot-collector:4317
     volumes:

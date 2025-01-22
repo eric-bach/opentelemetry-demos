@@ -8,7 +8,7 @@ import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-tra
 export async function nodeSDKBuilder(): Promise<void> {
   const sdk = new NodeSDK({
     resource: new Resource({
-      [ATTR_SERVICE_NAME]: 'yourServiceName',
+      [ATTR_SERVICE_NAME]: 'observability-demo',
       [ATTR_SERVICE_VERSION]: '1.0',
     }),
 

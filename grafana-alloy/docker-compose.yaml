@@ -25,16 +25,56 @@ services:
     depends_on:
       - init
 
+  ms-db-server:
+    image: mcr.microsoft.com/mssql/server
+    environment:
+      - SA_PASSWORD=P@ssw0rd
+      - ACCEPT_EULA=Y
+    volumes:
+      - ./data/db/mssql/scripts:/scripts/
+    ports:
+      - '1433:1433' # Ensure the port is correctly exposed
+    #entrypoint: /bin/bash
+    command:
+      - /bin/bash
+      - -c
+      - |
+        /opt/mssql/bin/sqlservr &
+        pid=$$!
+
+        echo "Waiting for MS SQL to be available ⏳"
+        /opt/mssql-tools18/bin/sqlcmd -l 30 -S localhost -h-1 -V1 -U sa -P $$SA_PASSWORD -C -Q "SET NOCOUNT ON SELECT \"YAY WE ARE UP\" , @@servername"
+        is_up=$$?
+        while [ $$is_up -ne 0 ] ; do
+          echo -e $$(date)
+          /opt/mssql-tools18/bin/sqlcmd -l 30 -S localhost -h-1 -V1 -U sa -P $$SA_PASSWORD -C -Q "SET NOCOUNT ON SELECT \"YAY WE ARE UP\" , @@servername"
+          is_up=$$?
+          sleep 5
+        done
+
+        for foo in /scripts/*.sql
+          do /opt/mssql-tools18/bin/sqlcmd -U sa -P $$SA_PASSWORD -C -l 30 -e -i $$foo
+        done
+        echo "All scripts have been executed. Waiting for MS SQL(pid $$pid) to terminate."
+
+        wait $$pid
+
   grafana-alloy-app:
     build:
       context: ../test-app/
       dockerfile: Dockerfile
-    container_name: test-app-2
+    container_name: grafana-alloy-app
+    environment:
+      - MS_DB_SERVER=ms-db-server
+      - MS_DB_USER=sa
+      - MS_DB_PASSWORD=P@ssw0rd
+      - MS_DB_NAME=OtelTempo
     volumes:
       - ../test-app:/app
     ports:
       - '8080:8080'
     depends_on:
+      - ms-db-server
       - alloy
 
   grafana:
