@@ -1,10 +1,25 @@
-# adot-otel-demo
+# aws-adot
 
 This application demonstrates the use of the OpenTelemety API with ADOT (AWS Distribution for OpenTelemetry) to send metrics, logs, and traces to AWS CloudWatch/X-Ray
 
-# OpenTelemetry with ADOT (Node.js)
+## Getting Started
 
-## Intialize manual instrumentation
+1. Authenticate with AWS SSO
+
+   ```
+   aws sso login --profile PROFILE_NAME
+   ```
+
+2. Run the script to launch docker-compose.  
+   The AWS SSO credentials are not being read by the ADOT docker container properly so this script exports the credentials as env variables for the docker container as a workaround
+
+   ```
+   ./docker-compose.sh
+   ```
+
+## Reference
+
+### Intialize manual instrumentation
 
 https://opentelemetry.io/docs/languages/js/instrumentation/#manual-instrumentation-setup
 
@@ -39,7 +54,7 @@ https://opentelemetry.io/docs/languages/js/instrumentation/#manual-instrumentati
    sdk.start();
    ```
 
-## Initialize manual tracing and ADOT Exporter to AWS X-Ray
+### Initialize manual tracing and ADOT Exporter to AWS X-Ray
 
 https://opentelemetry.io/docs/languages/js/instrumentation/#initialize-tracing
 
@@ -138,7 +153,7 @@ https://opentelemetry.io/docs/languages/js/instrumentation/#initialize-tracing
     });
     ```
 
-## Initialize manual metrics instrumentation and ADOT Exporter to AWS CloudWatch Metrics
+### Initialize manual metrics instrumentation and ADOT Exporter to AWS CloudWatch Metrics
 
 https://opentelemetry.io/docs/languages/js/instrumentation/#metrics
 

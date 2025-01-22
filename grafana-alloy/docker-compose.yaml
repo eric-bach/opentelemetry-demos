@@ -37,22 +37,23 @@ services:
     ports:
       - '8080:8080'
     depends_on:
-      - otel-collector
+      #      - otel-collector
+      - alloy
 
   # And put them in an OTEL collector pipeline...
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    volumes:
-      - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
-    ports:
-      - 1888:1888 # pprof extension
-      - 8888:8888 # Prometheus metrics exposed by the Collector
-      - 8889:8889 # Prometheus exporter metrics
-      - 13133:13133 # health_check extension
-      - 4317:4317 # OTLP gRPC receiver
-      - 4318:4318 # OTLP http receiver
-    depends_on:
-      - tempo
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib
+  #   volumes:
+  #     - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+  #   ports:
+  #     - 1888:1888 # pprof extension
+  #     - 8888:8888 # Prometheus metrics exposed by the Collector
+  #     - 8889:8889 # Prometheus exporter metrics
+  #     - 13133:13133 # health_check extension
+  #     - 4317:4317 # OTLP gRPC receiver
+  #     - 4318:4318 # OTLP http receiver
+  #   depends_on:
+  #     - tempo
 
   grafana:
     image: grafana/grafana:11.0.0
@@ -65,3 +66,15 @@ services:
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     ports:
       - '3000:3000'
+
+  alloy:
+    image: grafana/alloy:latest
+    command: >
+      run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy
+      - ./otel-collector.yaml:/etc/alloy/otel-collector.yaml
+    ports:
+      - '12345:12345'
+    depends_on:
+      - tempo
