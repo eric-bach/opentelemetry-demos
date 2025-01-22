@@ -2,7 +2,7 @@
 FROM node:20
 
 # Install bash and ping
-RUN apt-get update && apt-get install -y bash iputils-ping netcat-traditional
+# RUN apt-get update && apt-get install -y bash iputils-ping netcat-traditional
 
 # Create and change to the app directory
 WORKDIR /app
@@ -24,4 +24,3 @@ EXPOSE 8080
 
 # Command to run the application
 CMD ["npx", "ts-node", "--require", "./instrumentation.ts", "app.ts"]
-#CMD ["npx", "ts-node", "app.ts"]

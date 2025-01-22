@@ -17,7 +17,7 @@ services:
     image: *tempoImage
     command: ['-config.file=/etc/tempo.yaml']
     volumes:
-      - ./tempo.yaml:/etc/tempo.yaml
+      - ./config/tempo.yaml:/etc/tempo.yaml
       - ./tempo-data:/var/tempo
     ports:
       - '3200' # tempo
@@ -25,40 +25,39 @@ services:
     depends_on:
       - init
 
-  test-app-2:
+  grafana-otel-app:
     build:
-      context: ./app/
+      context: ./src/
       dockerfile: Dockerfile
     container_name: test-app-2
     environment:
       - ENDPOINT=otel-collector:4317
     volumes:
-      - ./app:/app
+      - ./src:/app
     ports:
       - '8080:8080'
     depends_on:
-      #      - otel-collector
-      - alloy
+      - otel-collector
 
   # And put them in an OTEL collector pipeline...
-  # otel-collector:
-  #   image: otel/opentelemetry-collector-contrib
-  #   volumes:
-  #     - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
-  #   ports:
-  #     - 1888:1888 # pprof extension
-  #     - 8888:8888 # Prometheus metrics exposed by the Collector
-  #     - 8889:8889 # Prometheus exporter metrics
-  #     - 13133:13133 # health_check extension
-  #     - 4317:4317 # OTLP gRPC receiver
-  #     - 4318:4318 # OTLP http receiver
-  #   depends_on:
-  #     - tempo
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+    depends_on:
+      - tempo
 
   grafana:
     image: grafana/grafana:11.0.0
     volumes:
-      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -66,15 +65,3 @@ services:
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
     ports:
       - '3000:3000'
-
-  alloy:
-    image: grafana/alloy:latest
-    command: >
-      run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
-    volumes:
-      - ./config.alloy:/etc/alloy/config.alloy
-      - ./otel-collector.yaml:/etc/alloy/otel-collector.yaml
-    ports:
-      - '12345:12345'
-    depends_on:
-      - tempo

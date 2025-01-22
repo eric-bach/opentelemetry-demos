@@ -3,7 +3,7 @@
 # To use AWS SSO credentials run ./docker-compose.sh
 
 services:
-  test-app:
+  aws-adot-app:
     build:
       context: ./src/
       dockerfile: Dockerfile
