@@ -27,13 +27,11 @@ services:
 
   grafana-otel-app:
     build:
-      context: ./src/
+      context: ../test-app/
       dockerfile: Dockerfile
     container_name: test-app-2
-    environment:
-      - ENDPOINT=otel-collector:4317
     volumes:
-      - ./src:/app
+      - ../test-app:/app
     ports:
       - '8080:8080'
     depends_on:

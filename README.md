@@ -6,4 +6,6 @@ This repository contains sample projects to demonstrate the use of OpenTelemetry
 - `grafana-otel` - Uses the OpenTelemetry collector to export telemetry data to Grafana backends
 - `grafana-alloy` - Uses the Grafana Alloy collector to export telemetry data to Grafana backends
 
-All the demos use docker-compose so ensure that Docker is setup
+All the demos use docker-compose so ensure that Docker is setup.
+
+The `grafana` demos use the `test-app` as the demo app
