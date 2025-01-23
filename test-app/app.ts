@@ -3,6 +3,7 @@ import express, { Express } from 'express';
 import opentelemetry, { trace, Span, context } from '@opentelemetry/api';
 import { nodeSDKBuilder } from './instrumentation';
 import { getFlightById, getFlights } from './dao';
+import { logger } from './instrumentation';
 
 dotenv.config();
 
@@ -33,6 +34,11 @@ const doSomething = async (parentSpan: Span) => {
 app.get('/flights', async (req, res) => {
   let result;
 
+  logger.emit({
+    severityText: 'INFO',
+    body: 'Get Flights',
+  });
+
   await tracer.startActiveSpan('getFlights', async (span: Span) => {
     result = await getFlights();
     const parentSpan = trace.getSpan(context.active());
@@ -49,6 +55,11 @@ app.get('/flights', async (req, res) => {
 
 app.get('/flights/:flightId', async (req, res) => {
   const flightId = parseInt(req.params.flightId);
+
+  logger.emit({
+    severityText: 'INFO',
+    body: 'Get Flight By Id',
+  });
 
   let result;
 

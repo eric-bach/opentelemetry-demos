@@ -5,7 +5,25 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 
-export async function nodeSDKBuilder(): Promise<void> {
+import { ConsoleLogRecordExporter, LoggerProvider, SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
+
+// Log exporter
+const loggerProvider = new LoggerProvider({
+  resource: new Resource({
+    [ATTR_SERVICE_NAME]: 'observability-demo-logger',
+  }),
+});
+const consoleLogProcessor = new SimpleLogRecordProcessor(new ConsoleLogRecordExporter());
+const logRecordProcessor = new SimpleLogRecordProcessor(
+  new OTLPLogExporter({
+    url: 'http://loki:3100',
+  })
+);
+loggerProvider.addLogRecordProcessor(logRecordProcessor);
+const logger = loggerProvider.getLogger('observability-demo-logger');
+
+async function nodeSDKBuilder(): Promise<void> {
   const sdk = new NodeSDK({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: 'observability-demo',
@@ -26,6 +44,8 @@ export async function nodeSDKBuilder(): Promise<void> {
         })
       ),
     ],
+
+    logRecordProcessors: [logRecordProcessor, consoleLogProcessor],
   });
 
   console.log('Starting instrumentation...');
@@ -41,3 +61,5 @@ export async function nodeSDKBuilder(): Promise<void> {
       .finally(() => process.exit(0));
   });
 }
+
+export { nodeSDKBuilder, logger };
