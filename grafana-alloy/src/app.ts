@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
 import express, { Express } from 'express';
 import opentelemetry, { trace, Span, context } from '@opentelemetry/api';
-import { nodeSDKBuilder } from './instrumentation';
-import { getFlightById, getFlights } from './dao';
+import { logger, nodeSDKBuilder } from './instrumentation';
 
 dotenv.config();
 
@@ -31,10 +30,14 @@ const doSomething = async (parentSpan: Span) => {
 };
 
 app.get('/flights', async (req, res) => {
-  let result;
+  let result = [{ flightId: 1 }, { flightId: 2 }, { flightId: 3 }];
+
+  logger.emit({
+    severityText: 'INFO',
+    body: 'getFlights',
+  });
 
   await tracer.startActiveSpan('getFlights', async (span: Span) => {
-    result = await getFlights();
     const parentSpan = trace.getSpan(context.active());
 
     if (parentSpan) {
@@ -50,12 +53,20 @@ app.get('/flights', async (req, res) => {
 app.get('/flights/:flightId', async (req, res) => {
   const flightId = parseInt(req.params.flightId);
 
-  let result;
+  logger.emit({
+    severityText: 'INFO',
+    body: 'getFlightById',
+    attributes: {
+      flightId: flightId,
+    },
+  });
+
+  let result = { flightId: flightId };
 
   await tracer.startActiveSpan('getFlightById', async (span: Span) => {
     span.setAttribute('flightId', flightId);
 
-    result = await getFlightById(flightId);
+    //result = await getFlightById(flightId);
 
     const parentSpan = trace.getSpan(context.active());
     if (parentSpan) {

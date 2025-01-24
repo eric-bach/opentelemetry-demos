@@ -1,10 +1,22 @@
 # https://github.com/grafana/tempo/tree/main/example/docker-compose
 
 services:
+  grafana-alloy-app:
+    build:
+      context: ./src/
+      dockerfile: Dockerfile
+    container_name: grafana-alloy-app
+    volumes:
+      - ./src:/app
+    ports:
+      - '8080:8080'
+    depends_on:
+      - alloy
+
   # Tempo runs as user 10001, and docker compose creates the volume as root.
   # As such, we need to chown the volume in order for Tempo to start correctly.
   init:
-    image: &tempoImage grafana/tempo:latest
+    image: &tempoImage grafana/tempo:2.7.0
     user: root
     entrypoint:
       - 'chown'
@@ -25,60 +37,46 @@ services:
     depends_on:
       - init
 
-  ms-db-server:
-    image: mcr.microsoft.com/mssql/server
-    environment:
-      - SA_PASSWORD=P@ssw0rd
-      - ACCEPT_EULA=Y
-    volumes:
-      - ./data/db/mssql/scripts:/scripts/
+  loki:
+    image: grafana/loki:3.3.0
     ports:
-      - '1433:1433' # Ensure the port is correctly exposed
-    #entrypoint: /bin/bash
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./config/loki.yaml:/etc/loki/local-config.yaml
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
     command:
-      - /bin/bash
-      - -c
-      - |
-        /opt/mssql/bin/sqlservr &
-        pid=$$!
-
-        echo "Waiting for MS SQL to be available ⏳"
-        /opt/mssql-tools18/bin/sqlcmd -l 30 -S localhost -h-1 -V1 -U sa -P $$SA_PASSWORD -C -Q "SET NOCOUNT ON SELECT \"YAY WE ARE UP\" , @@servername"
-        is_up=$$?
-        while [ $$is_up -ne 0 ] ; do
-          echo -e $$(date)
-          /opt/mssql-tools18/bin/sqlcmd -l 30 -S localhost -h-1 -V1 -U sa -P $$SA_PASSWORD -C -Q "SET NOCOUNT ON SELECT \"YAY WE ARE UP\" , @@servername"
-          is_up=$$?
-          sleep 5
-        done
-
-        for foo in /scripts/*.sql
-          do /opt/mssql-tools18/bin/sqlcmd -U sa -P $$SA_PASSWORD -C -l 30 -e -i $$foo
-        done
-        echo "All scripts have been executed. Waiting for MS SQL(pid $$pid) to terminate."
-
-        wait $$pid
-
-  grafana-alloy-app:
-    build:
-      context: ../test-app/
-      dockerfile: Dockerfile
-    container_name: grafana-alloy-app
-    environment:
-      - MS_DB_SERVER=ms-db-server
-      - MS_DB_USER=sa
-      - MS_DB_PASSWORD=P@ssw0rd
-      - MS_DB_NAME=OtelTempo
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
     volumes:
-      - ../test-app:/app
+      - ./config/prometheus.yaml:/etc/prometheus.yaml
     ports:
-      - '8080:8080'
+      - '9090:9090'
+
+  alloy:
+    image: grafana/alloy:v1.6.1
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+      - ./config/config.alloy:/etc/alloy/config.alloy
+    ports:
+      - '12345:12345'
+      - '4317:4317'
+      - '4318:4318'
+      - '4319:4319'
     depends_on:
-      - ms-db-server
-      - alloy
+      - tempo
+      - loki
 
   grafana:
-    image: grafana/grafana:11.0.0
+    image: grafana/grafana:11.4.0
     volumes:
       - ./config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
@@ -86,17 +84,6 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_USERS_DEFAULT_THEME=light
     ports:
       - '3000:3000'
-
-  alloy:
-    image: grafana/alloy:latest
-    command: >
-      run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
-    volumes:
-      - ./config/config.alloy:/etc/alloy/config.alloy
-      - ./otel-collector.yaml:/etc/alloy/otel-collector.yaml
-    ports:
-      - '12345:12345'
-    depends_on:
-      - tempo

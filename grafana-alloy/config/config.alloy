@@ -1,13 +1,29 @@
 otelcol.receiver.otlp "default" {
     grpc { }
+    http {}
 
     output {
-        traces = [otelcol.exporter.otlp.default.input]
+        traces = [otelcol.processor.batch.default.input]
+        logs   = [otelcol.processor.batch.default.input]
     }
+}
+
+
+otelcol.processor.batch "default" {
+  output {
+    traces = [otelcol.exporter.otlp.default.input]
+    logs   = [otelcol.exporter.otlphttp.default.input]
+  }
 }
 
 otelcol.exporter.otlp "default" {
     client {
         endpoint = "tempo:4317"
     }
+}
+
+otelcol.exporter.otlphttp "default" {
+  client {
+    endpoint = "http://loki:3100/otlp"
+  }
 }
