@@ -2,10 +2,12 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
+
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
+import { BatchLogRecordProcessor, LoggerProvider } from '@opentelemetry/sdk-logs';
+
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { BatchLogRecordProcessor, LoggerProvider } from '@opentelemetry/sdk-logs';
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
 
 const SERVICE_NAME = 'observability-demo';
 const resource = Resource.default().merge(
@@ -26,7 +28,7 @@ export async function nodeSDKBuilder(): Promise<void> {
       new SimpleSpanProcessor(new ConsoleSpanExporter()),
       new SimpleSpanProcessor(
         new OTLPTraceExporter({
-          url: 'http://tempo:4317',
+          url: 'http://alloy:4317',
         })
       ),
     ],

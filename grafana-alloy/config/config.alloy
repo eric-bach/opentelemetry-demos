@@ -3,27 +3,33 @@ otelcol.receiver.otlp "default" {
     http {}
 
     output {
-        traces = [otelcol.processor.batch.default.input]
-        logs   = [otelcol.processor.batch.default.input]
+        metrics = [otelcol.processor.batch.default.input]
+        traces  = [otelcol.processor.batch.default.input]
+        logs    = [otelcol.processor.batch.default.input]
     }
 }
 
 
 otelcol.processor.batch "default" {
   output {
-    traces = [otelcol.exporter.otlp.default.input]
-    logs   = [otelcol.exporter.otlphttp.default.input]
+    traces = [otelcol.exporter.otlp.tempo.input]
+    logs   = [otelcol.exporter.otlphttp.loki.input]
   }
 }
 
-otelcol.exporter.otlp "default" {
+otelcol.exporter.otlp "tempo" {
     client {
-        endpoint = "tempo:4317"
+      endpoint = "http://tempo:4317"
+      tls {
+        insecure = true
+        insecure_skip_verify = true
+      }
     }
 }
 
-otelcol.exporter.otlphttp "default" {
+otelcol.exporter.otlphttp "loki" {
   client {
     endpoint = "http://loki:3100/otlp"
   }
 }
+

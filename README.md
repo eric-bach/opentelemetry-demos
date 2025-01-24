@@ -11,15 +11,17 @@ The `grafana` demos use the `test-app` as the demo app
 
 # ToDo
 
-- Send traces to Alloy
-- Send logs to Alloy
-- Send metrics to Alloy
-- Injest CloudWatch/X-Ray from an AWS account to Grafana dashboard
+- [x] Send traces to Alloy
+- [x] Send logs to Alloy
+- [ ] Send metrics to Alloy
+- [ ] Add otelcol.processor.filter to filter log data
+- [ ] Injest CloudWatch/X-Ray from an AWS account to Grafana dashboard
 
 # References
 
 ### Tempo
 
+- [Demo app](https://github.com/grafana/intro-to-mltp/tree/main/alloy)
 - [Quick start for Tempo](https://grafana.com/docs/tempo/latest/getting-started/docker-example/)
 
 ### Loki
