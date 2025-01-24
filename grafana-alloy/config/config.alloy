@@ -3,13 +3,21 @@ otelcol.receiver.otlp "default" {
   http {}
 
   output {
-    metrics = [otelcol.processor.attributes.default.input]
+    metrics = [otelcol.processor.batch.default.input]
     traces  = [otelcol.processor.batch.default.input]
     logs    = [otelcol.processor.batch.default.input]
   }
 }
 
-otelcol.processor.attributes "default" {
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.processor.attributes.mimir.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    logs    = [otelcol.exporter.otlphttp.loki.input]
+  }
+}
+
+otelcol.processor.attributes "mimir" {
   action {
     action  = "insert"
     key     = "demo"
@@ -20,12 +28,6 @@ otelcol.processor.attributes "default" {
   }
 }
 
-otelcol.processor.batch "default" {
-  output {
-    traces  = [otelcol.exporter.otlp.tempo.input]
-    logs    = [otelcol.exporter.otlphttp.loki.input]
-  }
-}
 
 otelcol.exporter.otlphttp "mimir" {
   client {
