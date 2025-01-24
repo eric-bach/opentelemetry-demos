@@ -13,11 +13,16 @@ datasources:
     apiVersion: 1
     uid: tempo
     jsonData:
-      httpMethod: GET
+      nodeGraph:
+        enabled: true
       serviceMap:
-        datasourceUid: prometheus
-      streamingEnabled:
-        search: true
+        datasourceUid: 'Mimir'
+      tracesToLogs:
+        datasourceUid: loki
+        filterByTraceID: false
+        spanEndTimeShift: '500ms'
+        spanStartTimeShift: '-500ms'
+        tags: ['beast']
   - name: Loki
     type: loki
     access: proxy
@@ -27,15 +32,14 @@ datasources:
     isDefault: false
     version: 1
     editable: false
-  - name: Prometheus
+  - name: Mimir
     type: prometheus
-    uid: prometheus
     access: proxy
-    orgId: 1
-    url: http://prometheus:9090
-    basicAuth: false
-    isDefault: false
-    version: 1
-    editable: false
+    uid: mimir
+    url: http://mimir:9009/prometheus
     jsonData:
-      httpMethod: GET
+      exemplarTraceIdDestinations:
+        - datasourceUid: tempo
+          name: traceID
+      httpMethod: POST
+      timeInterval: '2s'

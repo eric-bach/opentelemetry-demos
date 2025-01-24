@@ -1,7 +1,11 @@
 /*instrumentation.ts*/
 import { NodeSDK } from '@opentelemetry/sdk-node';
+import opentelemetry from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
+
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { PeriodicExportingMetricReader, MeterProvider } from '@opentelemetry/sdk-metrics';
 
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-grpc';
 import { BatchLogRecordProcessor, LoggerProvider } from '@opentelemetry/sdk-logs';
@@ -17,24 +21,25 @@ const resource = Resource.default().merge(
   })
 );
 
+// Setup OTel metrics
+setupMetrics();
+
+// Setup OTel logging
 export const logger = setupLogger();
 
 export async function nodeSDKBuilder(): Promise<void> {
+  // Setup OTel tracing
   const sdk = new NodeSDK({
     resource,
 
     // Send trace to Console and OTel collector for Tempo
     spanProcessors: [
       new SimpleSpanProcessor(new ConsoleSpanExporter()),
-      new SimpleSpanProcessor(
-        new OTLPTraceExporter({
-          url: 'http://alloy:4317',
-        })
-      ),
+      new SimpleSpanProcessor(new OTLPTraceExporter({ url: 'http://alloy:4317' })),
     ],
   });
 
-  console.log('Starting instrumentation...');
+  console.log('Starting OpenTelemetry SDK server for instrumentation...');
 
   sdk.start();
 
@@ -42,19 +47,29 @@ export async function nodeSDKBuilder(): Promise<void> {
   process.on('SIGTERM', () => {
     sdk
       .shutdown()
-      .then(() => console.log('Tracing and Metrics terminated'))
-      .catch((error) => console.log('Error terminating tracing and metrics', error))
+      .then(() => console.log('OpenTelemetry SDK server terminated'))
+      .catch((error) => console.log('Error terminating OpenTelemetry SDK server', error))
       .finally(() => process.exit(0));
   });
 }
 
-export function setupLogger() {
+function setupMetrics() {
+  const metricReader = new PeriodicExportingMetricReader({
+    exporter: new OTLPMetricExporter({ url: 'http://alloy:4317' }),
+    exportIntervalMillis: 10000,
+  });
+
+  const myServiceMeterProvider = new MeterProvider({
+    resource: resource,
+    readers: [metricReader],
+  });
+
+  opentelemetry.metrics.setGlobalMeterProvider(myServiceMeterProvider);
+}
+
+function setupLogger() {
   const loggerProvider = new LoggerProvider({ resource });
-  const logRecordProcessor = new BatchLogRecordProcessor(
-    new OTLPLogExporter({
-      url: 'http://alloy:4317',
-    })
-  );
+  const logRecordProcessor = new BatchLogRecordProcessor(new OTLPLogExporter({ url: 'http://alloy:4317' }));
 
   loggerProvider.addLogRecordProcessor(logRecordProcessor);
   return loggerProvider.getLogger(SERVICE_NAME);

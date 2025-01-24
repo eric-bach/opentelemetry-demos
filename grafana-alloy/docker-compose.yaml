@@ -45,17 +45,13 @@ services:
     volumes:
       - ./config/loki.yaml:/etc/loki/local-config.yaml
 
-  prometheus:
-    image: prom/prometheus:v3.1.0
-    command:
-      - --config.file=/etc/prometheus.yaml
-      - --web.enable-remote-write-receiver
-      - --enable-feature=exemplar-storage
-      - --enable-feature=native-histograms
-    volumes:
-      - ./config/prometheus.yaml:/etc/prometheus.yaml
+  mimir:
+    image: grafana/mimir:2.15.0
+    command: ['-ingester.native-histograms-ingestion-enabled=true', '-config.file=/etc/mimir.yaml']
     ports:
-      - '9090:9090'
+      - '9009:9009'
+    volumes:
+      - './config/mimir.yaml:/etc/mimir.yaml'
 
   alloy:
     image: grafana/alloy:v1.6.1
@@ -74,6 +70,7 @@ services:
     depends_on:
       - tempo
       - loki
+      - mimir
 
   grafana:
     image: grafana/grafana:11.4.0

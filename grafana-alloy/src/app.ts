@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import express, { Express } from 'express';
-import opentelemetry, { trace, Span, context } from '@opentelemetry/api';
+import opentelemetry, { metrics, trace, Span, context } from '@opentelemetry/api';
 import { logger, nodeSDKBuilder } from './instrumentation';
 
 dotenv.config();
@@ -9,6 +9,12 @@ const PORT: number = parseInt(process.env.PORT || '8080');
 const app: Express = express();
 
 const tracer = trace.getTracer('observability-app-tracer');
+const meter = metrics.getMeter('observability-app-meter');
+const common_attributes = { signal: 'metric', language: 'javascript', metricType: 'random' };
+const counter = meter.createCounter('lib.flights', {
+  description: 'The number of flights',
+  unit: '1',
+});
 
 // Add a delay inside doSomething function
 const doSomething = async (parentSpan: Span) => {
@@ -36,6 +42,7 @@ app.get('/flights', async (req, res) => {
     severityText: 'INFO',
     body: 'getFlights',
   });
+  counter.add(3, common_attributes);
 
   await tracer.startActiveSpan('getFlights', async (span: Span) => {
     const parentSpan = trace.getSpan(context.active());
@@ -60,6 +67,7 @@ app.get('/flights/:flightId', async (req, res) => {
       flightId: flightId,
     },
   });
+  counter.add(1, common_attributes);
 
   let result = { flightId: flightId };
 

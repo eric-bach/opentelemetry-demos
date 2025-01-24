@@ -14,8 +14,8 @@ The `grafana` demos use the `test-app` as the demo app
 - [x] Send traces to Alloy
 - [x] Send logs to Alloy
 - [ ] Send metrics to Alloy
-- [ ] Add otelcol.processor.filter to filter log data
-- [ ] Injest CloudWatch/X-Ray from an AWS account to Grafana dashboard
+- [ ] Ingest CloudWatch/X-Ray from an AWS account to Grafana dashboard
+- [ ] Ingest from Datadog https://grafana.com/docs/alloy/latest/collect/datadog-traces-metrics/
 
 # References
 
@@ -28,3 +28,8 @@ The `grafana` demos use the `test-app` as the demo app
 
 - [OpenTelemetry log implementation](https://npm.io/package/@opentelemetry/sdk-logs)
 - [Send logs to Loki using local file watcher](https://grafana.com/docs/alloy/latest/tutorials/send-logs-to-loki/)
+
+### Mimi
+
+- Alloy - https://www.youtube.com/watch?v=IRqQEzc0kvA
+- Mimi tutorial - https://www.youtube.com/watch?v=MS_ZlnDPj3E&list=PLYrn63eEqAzZL2TaS0pXXw-_DEl3SsAF_&index=4
