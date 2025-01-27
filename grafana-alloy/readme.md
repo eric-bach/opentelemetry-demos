@@ -1,13 +1,24 @@
 # grafana-otel
 
-This application demonstrates the use of the OpenTelemety API with the Grafana Alloy collector to send metrics, logs, and traces to Grafana backends (Loki, Grafana, Tempo, Mimir)
+This application demonstrates the use of Grafana Dashboards for visualization anc correlation of telemetry data from a various backends:
+
+- Grafana backends (Loki for logs, Tempo for traces, Mimir for metrics) using the Alloy collector with the OpenTelemetry API
+- AWS backends (CloudWatch Logs for logs, X-Ray for traces, CloudWatch Metrics for metrics) using the build-in Grafana AWS Data Source
+- Datadog backend (requires enterprise license, not implemented yet)
 
 ## Getting Started
 
-1. Start the stack
+1. Authenticate with AWS SSO
 
    ```
-   docker compose up -d
+   aws sso login --profile PROFILE_NAME
+   ```
+
+2. Run the script to launch docker-compose.  
+   The AWS SSO credentials are not being read by the docker container properly so this script exports the credentials as env variables for the docker container as a workaround
+
+   ```
+   ./docker-compose.sh
    ```
 
    At this point, the following containers should be spun up:

@@ -13,7 +13,7 @@ The `grafana` demos use the `test-app` as the demo app
 
 - [x] Send traces to Alloy
 - [x] Send logs to Alloy
-- [ ] Send metrics to Alloy
+- [x] Send metrics to Alloy
 - [ ] Ingest CloudWatch/X-Ray from an AWS account to Grafana dashboard
 - [ ] Ingest from Datadog https://grafana.com/docs/alloy/latest/collect/datadog-traces-metrics/
 

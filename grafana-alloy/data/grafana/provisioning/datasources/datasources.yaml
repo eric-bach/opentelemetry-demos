@@ -43,3 +43,8 @@ datasources:
           name: traceID
       httpMethod: POST
       timeInterval: '2s'
+  - name: CloudWatch
+    type: cloudwatch
+    jsonData:
+      authType: default
+      defaultRegion: us-west-2
